@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:moviedetails/blocs/bloc/movies_bloc.dart';
+import 'package:moviedetails/core/api_constants.dart';
 import 'package:moviedetails/screens/movie_details_page.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -17,14 +20,10 @@ class _MoviesListPageState extends State<MoviesListPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   Timer? _debounce;
 
-  bool _isLoading = true;
-  List<dynamic> _movies = [];
-  List<dynamic> _filteredMovies = [];
-
   @override
   void initState() {
     super.initState();
-    _fetchMovies();
+    context.read<MoviesBloc>().add(FetchTrendingMovies());
   }
 
   @override
@@ -34,39 +33,11 @@ class _MoviesListPageState extends State<MoviesListPage> {
     super.dispose();
   }
 
-  Future<void> _fetchMovies() async {
-    // TODO: Replace with your API call
-    await Future.delayed(const Duration(seconds: 1));
-
-    // TEMP dummy movies (replace with API result)
-    final tempMovies = List.generate(
-      20,
-      (i) => {
-        "title": "Movie $i",
-        "poster":
-            "https://image.tmdb.org/t/p/w500/8YFL5QQVPy3AgrEQxNYVSgiPEbe.jpg",
-      },
-    );
-
-    setState(() {
-      _movies = tempMovies;
-      _filteredMovies = tempMovies;
-      _isLoading = false;
-    });
-  }
-
   void _onSearchChanged(String query) {
     _debounce?.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      query = query.toLowerCase().trim();
-
-      setState(() {
-        _filteredMovies = _movies.where((movie) {
-          final title = movie["title"].toLowerCase();
-          return title.contains(query);
-        }).toList();
-      });
+      context.read<MoviesBloc>().add(SearchMovies(query));
     });
   }
 
@@ -96,7 +67,18 @@ class _MoviesListPageState extends State<MoviesListPage> {
           ),
 
           Expanded(
-            child: _isLoading ? _buildShimmerGrid(isDark) : _buildMoviesGrid(),
+            child: BlocBuilder<MoviesBloc, MoviesState>(
+              builder: (context, state) {
+                if (state.isLoading) {
+                  return _buildShimmerGrid(isDark);
+                }
+                if (state.movies.isEmpty) {
+                  return const Center(child: Text("No movies found"));
+                }
+
+                return _buildMoviesGrid(state);
+              },
+            ),
           ),
         ],
       ),
@@ -104,14 +86,10 @@ class _MoviesListPageState extends State<MoviesListPage> {
   }
 
   // GRID WHEN DATA IS READY
-  Widget _buildMoviesGrid() {
-    if (_filteredMovies.isEmpty) {
-      return const Center(child: Text("No movies found"));
-    }
-
+  Widget _buildMoviesGrid(MoviesState state) {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: _filteredMovies.length,
+      itemCount: state.movies.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 12,
@@ -119,14 +97,14 @@ class _MoviesListPageState extends State<MoviesListPage> {
         childAspectRatio: 0.55,
       ),
       itemBuilder: (context, i) {
-        final movie = _filteredMovies[i];
+        final movie = state.movies[i];
 
         return GestureDetector(
           onTap: () {
             Navigator.pushNamed(
               context,
               MovieDetailsPage.routeName,
-              arguments: movie,
+              arguments: movie.id,
             );
           },
           child: Column(
@@ -137,7 +115,7 @@ class _MoviesListPageState extends State<MoviesListPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: movie["poster"],
+                    imageUrl: "${ApiConstants.imageBaseUrl}${movie.posterPath}",
                     fit: BoxFit.cover,
                     placeholder: (_, __) =>
                         Container(color: Colors.grey.shade800),
@@ -150,7 +128,7 @@ class _MoviesListPageState extends State<MoviesListPage> {
 
               // TITLE
               Text(
-                movie["title"],
+                movie.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall,

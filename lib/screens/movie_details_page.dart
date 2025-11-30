@@ -1,194 +1,189 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:moviedetails/blocs/bloc/movies_bloc.dart';
 
-class MovieDetailsPage extends StatelessWidget {
+class MovieDetailsPage extends StatefulWidget {
   static const String routeName = '/movie-details';
+  final int movieId;
 
-  final dynamic movie; // Replace with your Movie model when ready
+  const MovieDetailsPage({super.key, required this.movieId});
 
-  const MovieDetailsPage({super.key, required this.movie});
+  @override
+  State<MovieDetailsPage> createState() => _MovieDetailsPageState();
+}
+
+class _MovieDetailsPageState extends State<MovieDetailsPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Fetch movie details + cast from BLoC
+    context.read<MoviesBloc>().add(FetchMovieDetails(widget.movieId));
+    context.read<MoviesBloc>().add(FetchMovieCast(widget.movieId));
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // TOP POSTER BAR WITH HERO ANIMATION
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 350,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                movie["title"],
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              background: Hero(
-                tag: movie["poster"],
-                child: CachedNetworkImage(
-                  imageUrl: movie["poster"],
-                  fit: BoxFit.cover,
+    return BlocBuilder<MoviesBloc, MoviesState>(
+      builder: (context, state) {
+        if (state.isLoading || state.details == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final movie = state.details!;
+        final cast = state.cast;
+
+        return Scaffold(
+          body: CustomScrollView(
+            slivers: [
+              // TOP POSTER BAR
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 350,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: Text(
+                    movie.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  background: CachedNetworkImage(
+                    imageUrl:
+                        "https://image.tmdb.org/t/p/w500${movie.posterPath}",
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // CONTENT
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// TITLE + YEAR
-                  Text(
-                    movie["title"],
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  Row(
+              // CONTENT
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.star, color: Colors.amber.shade400, size: 20),
-                      const SizedBox(width: 4),
+                      // TITLE
                       Text(
-                        movie["rating"]?.toString() ?? "7.5",
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        movie["year"]?.toString() ?? "2024",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey,
+                        movie.title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
+                      const SizedBox(height: 6),
 
-                  const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.star,
+                            color: Colors.amber.shade400,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            movie.releaseDate!.substring(0, 4),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
 
-                  /// GENRES
-                  Wrap(
-                    spacing: 8,
-                    children:
-                        (movie["genres"] ?? ["Action", "Thriller", "Adventure"])
-                            .map<Widget>((g) {
-                              return Chip(
-                                label: Text(g),
+                      const SizedBox(height: 20),
+
+                      // GENRES
+                      Wrap(
+                        spacing: 8,
+                        children: movie.genres
+                            .map(
+                              (g) => Chip(
+                                label: Text(g.name),
                                 backgroundColor: isDark
                                     ? Colors.grey.shade900
                                     : Colors.grey.shade200,
-                              );
-                            })
+                              ),
+                            )
                             .toList(),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // OVERVIEW
+                      Text(
+                        "Overview",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        movie.overview.toString(),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.5,
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // CAST
+                      Text(
+                        "Cast",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      SizedBox(
+                        height: 130,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: cast.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, i) {
+                            final actor = cast[i];
+                            return Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: CachedNetworkImage(
+                                    imageUrl:
+                                        "https://image.tmdb.org/t/p/w500${actor.profilePath}",
+                                    width: 70,
+                                    height: 70,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                SizedBox(
+                                  width: 70,
+                                  child: Text(
+                                    actor.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
                   ),
-
-                  const SizedBox(height: 20),
-
-                  /// DESCRIPTION
-                  Text(
-                    "Overview",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Text(
-                    movie["description"] ??
-                        "This is a sample description for this movie. Replace "
-                            "this with actual overview from your API.",
-                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /// CAST SECTION
-                  Text(
-                    "Cast",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  SizedBox(height: 130, child: _buildCastList(isDark)),
-
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  /// HORIZONTAL CAST LIST
-  Widget _buildCastList(bool isDark) {
-    // Replace with your API cast list later
-    final dummyCast = List.generate(
-      10,
-      (i) => {
-        "name": "Actor $i",
-        "image":
-            "https://image.tmdb.org/t/p/w500/3fP7C7Qe5z9Y2HzFG1aFMEGgxoY.jpg",
-      },
-    );
-
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemCount: dummyCast.length,
-      separatorBuilder: (_, __) => const SizedBox(width: 12),
-      itemBuilder: (context, i) {
-        final actor = dummyCast[i];
-
-        return Column(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(50),
-              child: CachedNetworkImage(
-                imageUrl: actor["image"].toString(),
-                width: 70,
-                height: 70,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => _shimmerCircle(isDark),
-                errorWidget: (_, __, ___) => _shimmerCircle(isDark),
-              ),
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: 70,
-              child: Text(
-                actor["name"].toString(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ],
         );
       },
-    );
-  }
-
-  /// SHIMMER FOR CAST IMAGES
-  Widget _shimmerCircle(bool isDark) {
-    return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey[900]! : Colors.grey[300]!,
-      highlightColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
-      child: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(color: Colors.grey, shape: BoxShape.circle),
-      ),
     );
   }
 }
