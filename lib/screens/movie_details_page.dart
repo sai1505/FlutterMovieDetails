@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:moviedetails/blocs/bloc/movies_bloc.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MovieDetailsPage extends StatefulWidget {
   static const String routeName = '/movie-details';
@@ -17,8 +18,6 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
   @override
   void initState() {
     super.initState();
-
-    // Fetch movie details + cast from BLoC
     context.read<MoviesBloc>().add(FetchMovieDetails(widget.movieId));
     context.read<MoviesBloc>().add(FetchMovieCast(widget.movieId));
   }
@@ -30,19 +29,123 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
     return BlocBuilder<MoviesBloc, MoviesState>(
       builder: (context, state) {
+        // ❗ SHIMMER LOADING
         if (state.isLoading || state.details == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            body: Shimmer.fromColors(
+              baseColor: Colors.grey.shade800,
+              highlightColor: Colors.grey.shade700,
+              child: CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    expandedHeight: 350,
+                    flexibleSpace: Container(color: Colors.grey.shade900),
+                  ),
+
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 200,
+                            height: 22,
+                            color: Colors.grey.shade900,
+                          ),
+                          const SizedBox(height: 16),
+
+                          Row(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 24,
+                                color: Colors.grey.shade900,
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 60,
+                                height: 24,
+                                color: Colors.grey.shade900,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          Container(
+                            width: 120,
+                            height: 20,
+                            color: Colors.grey.shade900,
+                          ),
+                          const SizedBox(height: 12),
+
+                          Column(
+                            children: List.generate(
+                              4,
+                              (_) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 14,
+                                  color: Colors.grey.shade900,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          Container(
+                            width: 80,
+                            height: 20,
+                            color: Colors.grey.shade900,
+                          ),
+                          const SizedBox(height: 12),
+
+                          SizedBox(
+                            height: 130,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: 8,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
+                              itemBuilder: (_, __) => Column(
+                                children: [
+                                  Container(
+                                    width: 70,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade900,
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    width: 70,
+                                    height: 12,
+                                    color: Colors.grey.shade900,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
+        // ❗ REAL DATA UI
         final movie = state.details!;
         final cast = state.cast;
 
         return Scaffold(
           body: CustomScrollView(
             slivers: [
-              // TOP POSTER BAR
               SliverAppBar(
                 pinned: true,
                 expandedHeight: 350,
@@ -60,14 +163,12 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                 ),
               ),
 
-              // CONTENT
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // TITLE
                       Text(
                         movie.title,
                         style: theme.textTheme.headlineSmall?.copyWith(
@@ -95,7 +196,6 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
                       const SizedBox(height: 20),
 
-                      // GENRES
                       Wrap(
                         spacing: 8,
                         children: movie.genres
@@ -112,7 +212,6 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
                       const SizedBox(height: 20),
 
-                      // OVERVIEW
                       Text(
                         "Overview",
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -129,7 +228,6 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
                       const SizedBox(height: 24),
 
-                      // CAST
                       Text(
                         "Cast",
                         style: theme.textTheme.titleMedium?.copyWith(

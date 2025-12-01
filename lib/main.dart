@@ -71,7 +71,7 @@ class MovieApp extends StatelessWidget {
   final ThemeData _lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorSchemeSeed: Colors.deepPurple,
+    colorSchemeSeed: const Color.fromARGB(255, 0, 0, 0),
     scaffoldBackgroundColor: Colors.white,
     appBarTheme: const AppBarTheme(
       elevation: 0,
@@ -93,7 +93,7 @@ class MovieApp extends StatelessWidget {
   final ThemeData _darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorSchemeSeed: Colors.deepPurple,
+    colorSchemeSeed: const Color.fromARGB(255, 255, 255, 255),
     scaffoldBackgroundColor: const Color(0xFF0D0D0D),
     appBarTheme: const AppBarTheme(
       elevation: 0,
