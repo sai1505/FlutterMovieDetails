@@ -15,11 +15,12 @@ class MovieApiService {
       };
   }
 
-  Future<List<dynamic>> getTrendingMovies() async {
+  Future<List<dynamic>> getTrendingMovies({int page = 1}) async {
     final response = await _dio.get(
       "${ApiConstants.baseUrl}/trending/movie/day",
       queryParameters: {
         "language": "en-US",
+        "page": page,
         // ❌ remove api_key
       },
     );

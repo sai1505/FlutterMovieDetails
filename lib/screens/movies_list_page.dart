@@ -18,6 +18,7 @@ class MoviesListPage extends StatefulWidget {
 
 class _MoviesListPageState extends State<MoviesListPage> {
   final TextEditingController _searchCtrl = TextEditingController();
+  final ScrollController _controller = ScrollController();
   Timer? _debounce;
 
   @override
@@ -25,11 +26,18 @@ class _MoviesListPageState extends State<MoviesListPage> {
     super.initState();
     if (!mounted) return;
     context.read<MoviesBloc>().add(FetchTrendingMovies());
+    _controller.addListener(() {
+      if (_controller.position.pixels >=
+          _controller.position.maxScrollExtent - 300) {
+        context.read<MoviesBloc>().add(FetchNextPage());
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _controller.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -77,7 +85,7 @@ class _MoviesListPageState extends State<MoviesListPage> {
                   return const Center(child: Text("No movies found"));
                 }
 
-                return _buildMoviesGrid(state);
+                return _buildMoviesGrid(state, isDark);
               },
             ),
           ),
@@ -87,10 +95,11 @@ class _MoviesListPageState extends State<MoviesListPage> {
   }
 
   // GRID WHEN DATA IS READY
-  Widget _buildMoviesGrid(MoviesState state) {
+  Widget _buildMoviesGrid(MoviesState state, bool isDark) {
     return GridView.builder(
+      controller: _controller,
       padding: const EdgeInsets.all(12),
-      itemCount: state.movies.length,
+      itemCount: state.movies.length + (state.isFetchingMore ? 3 : 0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 12,
@@ -98,6 +107,11 @@ class _MoviesListPageState extends State<MoviesListPage> {
         childAspectRatio: 0.55,
       ),
       itemBuilder: (context, i) {
+        // bottom shimmer loaders
+        if (i >= state.movies.length) {
+          return _buildBottomShimmer(isDark); // <-- create this
+        }
+
         final movie = state.movies[i];
 
         return GestureDetector(
@@ -111,7 +125,6 @@ class _MoviesListPageState extends State<MoviesListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // POSTER
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -124,10 +137,7 @@ class _MoviesListPageState extends State<MoviesListPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 6),
-
-              // TITLE
               Text(
                 movie.title,
                 maxLines: 1,
@@ -164,6 +174,19 @@ class _MoviesListPageState extends State<MoviesListPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildBottomShimmer(bool isDark) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? Colors.grey[900]! : Colors.grey[300]!,
+      highlightColor: isDark ? Colors.grey[800]! : Colors.grey[100]!,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
     );
   }
 }

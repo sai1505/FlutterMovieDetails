@@ -31,3 +31,7 @@ class FetchMovieCast extends MoviesEvent {
   @override
   List<Object?> get props => [movieId];
 }
+
+class FetchNextPage extends MoviesEvent {
+  FetchNextPage();
+}

@@ -17,16 +17,26 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
     on<SearchMovies>(_onSearchMovies);
     on<FetchMovieDetails>(_onFetchMovieDetails);
     on<FetchMovieCast>(_onFetchMovieCast);
+    on<FetchNextPage>(_onFetchNextPage);
   }
 
   Future<void> _onFetchTrendingMovies(
     FetchTrendingMovies event,
     Emitter<MoviesState> emit,
   ) async {
-    emit(state.copywith(isLoading: true));
+    emit(state.copywith(isLoading: true, currentPage: 1));
+
     try {
-      final movies = await movieRepository.getTrendingMovies();
-      emit(state.copywith(isLoading: false, movies: movies));
+      final movies = await movieRepository.getTrendingMovies(page: 1);
+      emit(
+        state.copywith(
+          isLoading: false,
+          movies: movies,
+          currentPage: 1,
+          isFetchingMore: false,
+          error: null,
+        ),
+      );
     } catch (e) {
       emit(state.copywith(isLoading: false, error: e.toString()));
     }
@@ -71,6 +81,43 @@ class MoviesBloc extends Bloc<MoviesEvent, MoviesState> {
       emit(state.copywith(isLoading: false, cast: cast));
     } catch (e) {
       emit(state.copywith(isLoading: false, error: e.toString()));
+    }
+  }
+
+  Future<void> _onFetchNextPage(
+    FetchNextPage event,
+    Emitter<MoviesState> emit,
+  ) async {
+    // already loading more → ignore
+    if (state.isFetchingMore) return;
+
+    emit(state.copywith(isFetchingMore: true));
+
+    final nextPage = state.currentPage + 1;
+
+    try {
+      final newMovies = await movieRepository.getTrendingMovies(page: nextPage);
+
+      // if API returns empty → no more pages
+      if (newMovies.isEmpty) {
+        emit(state.copywith(isFetchingMore: false));
+        return;
+      }
+
+      emit(
+        state.copywith(
+          isFetchingMore: false,
+          currentPage: nextPage,
+          movies: [...state.movies, ...newMovies],
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copywith(
+          isFetchingMore: false,
+          error: e.toString(),
+        ),
+      );
     }
   }
 }

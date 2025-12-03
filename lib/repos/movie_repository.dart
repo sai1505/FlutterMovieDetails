@@ -9,8 +9,8 @@ class MovieRepository {
   MovieRepository({required this.api});
 
   /// Get trending movies
-  Future<List<MovieModel>> getTrendingMovies() async {
-    final results = await api.getTrendingMovies();
+  Future<List<MovieModel>> getTrendingMovies({int page = 1}) async {
+    final results = await api.getTrendingMovies(page: page);
     return results
         .map<MovieModel>((json) => MovieModel.fromJson(json))
         .toList();
