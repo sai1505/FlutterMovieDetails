@@ -16,10 +16,17 @@ class MovieDetailsPage extends StatefulWidget {
 
 class _MovieDetailsPageState extends State<MovieDetailsPage> {
   @override
+  @override
   void initState() {
     super.initState();
-    context.read<MoviesBloc>().add(FetchMovieDetails(widget.movieId));
-    context.read<MoviesBloc>().add(FetchMovieCast(widget.movieId));
+
+    Future.microtask(() {
+      if (!mounted) return;
+
+      final bloc = context.read<MoviesBloc>();
+      bloc.add(FetchMovieDetails(widget.movieId));
+      bloc.add(FetchMovieCast(widget.movieId));
+    });
   }
 
   @override
@@ -171,7 +178,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                     children: [
                       Text(
                         movie.title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -187,7 +194,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                           const SizedBox(width: 4),
                           Text(
                             movie.releaseDate!.substring(0, 4),
-                            style: theme.textTheme.bodyMedium?.copyWith(
+                            style: theme.textTheme.bodyLarge?.copyWith(
                               color: Colors.grey,
                             ),
                           ),
@@ -214,14 +221,14 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
                       Text(
                         "Overview",
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         movie.overview.toString(),
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: theme.textTheme.bodyLarge?.copyWith(
                           height: 1.5,
                         ),
                       ),
@@ -230,7 +237,7 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
 
                       Text(
                         "Cast",
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -23,6 +23,7 @@ class _MoviesListPageState extends State<MoviesListPage> {
   @override
   void initState() {
     super.initState();
+    if (!mounted) return;
     context.read<MoviesBloc>().add(FetchTrendingMovies());
   }
 
@@ -131,7 +132,7 @@ class _MoviesListPageState extends State<MoviesListPage> {
                 movie.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
