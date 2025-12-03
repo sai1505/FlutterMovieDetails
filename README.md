@@ -53,7 +53,7 @@ TMDB_API_KEY=your_tmdb_api_key_here
 TMDB_READ_ACCESS_TOKEN=your_read_access_token
 ```
 
-### 📌 Step 3 — Load the `.env` in `main.dart`:
+### 📌 Step 3 — Load the  `.env` in `main.dart`:
 
 ```dart
 Future main() async {
