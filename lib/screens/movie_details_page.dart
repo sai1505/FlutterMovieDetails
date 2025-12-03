@@ -37,110 +37,113 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
     return BlocBuilder<MoviesBloc, MoviesState>(
       builder: (context, state) {
         // ❗ SHIMMER LOADING
+        // LIGHTWEIGHT SHIMMER LOADING
         if (state.isLoading || state.details == null) {
           return Scaffold(
-            body: Shimmer.fromColors(
-              baseColor: Colors.grey.shade800,
-              highlightColor: Colors.grey.shade700,
-              child: CustomScrollView(
-                slivers: [
-                  SliverAppBar(
-                    expandedHeight: 350,
-                    flexibleSpace: Container(color: Colors.grey.shade900),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 200,
-                            height: 22,
-                            color: Colors.grey.shade900,
-                          ),
-                          const SizedBox(height: 16),
-
-                          Row(
-                            children: [
-                              Container(
-                                width: 60,
-                                height: 24,
-                                color: Colors.grey.shade900,
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 60,
-                                height: 24,
-                                color: Colors.grey.shade900,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          Container(
-                            width: 120,
-                            height: 20,
-                            color: Colors.grey.shade900,
-                          ),
-                          const SizedBox(height: 12),
-
-                          Column(
-                            children: List.generate(
-                              4,
-                              (_) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Container(
-                                  width: double.infinity,
-                                  height: 14,
-                                  color: Colors.grey.shade900,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          Container(
-                            width: 80,
-                            height: 20,
-                            color: Colors.grey.shade900,
-                          ),
-                          const SizedBox(height: 12),
-
-                          SizedBox(
-                            height: 130,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: 8,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 12),
-                              itemBuilder: (_, __) => Column(
-                                children: [
-                                  Container(
-                                    width: 70,
-                                    height: 70,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade900,
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    width: 70,
-                                    height: 12,
-                                    color: Colors.grey.shade900,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Shimmer.fromColors(
+                baseColor: Colors.grey.shade800,
+                highlightColor: Colors.grey.shade700,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Poster placeholder
+                    Container(
+                      height: 220,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 20),
+
+                    // Title
+                    Container(
+                      height: 22,
+                      width: 200,
+                      color: Colors.grey.shade900,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Metadata row
+                    Row(
+                      children: [
+                        Container(
+                          height: 16,
+                          width: 60,
+                          color: Colors.grey.shade900,
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          height: 16,
+                          width: 60,
+                          color: Colors.grey.shade900,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Overview lines
+                    ...List.generate(
+                      3,
+                      (i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          height: 14,
+                          width: double.infinity,
+                          color: Colors.grey.shade900,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Cast title
+                    Container(
+                      height: 18,
+                      width: 100,
+                      color: Colors.grey.shade900,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Cast circles (lightweight)
+                    SizedBox(
+                      height: 80,
+                      child: Row(
+                        children: List.generate(
+                          5,
+                          (i) => Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Column(
+                              children: [
+                                Container(
+                                  height: 50,
+                                  width: 50,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade900,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  height: 10,
+                                  width: 50,
+                                  color: Colors.grey.shade900,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -165,6 +168,10 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                   background: CachedNetworkImage(
                     imageUrl:
                         "https://image.tmdb.org/t/p/w500${movie.posterPath}",
+                    placeholder: (_, __) => Container(color: Colors.black12),
+                    fadeInDuration: const Duration(milliseconds: 100),
+                    memCacheHeight: 500,
+                    filterQuality: FilterQuality.low,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -259,6 +266,9 @@ class _MovieDetailsPageState extends State<MovieDetailsPage> {
                                   child: CachedNetworkImage(
                                     imageUrl:
                                         "https://image.tmdb.org/t/p/w500${actor.profilePath}",
+                                    placeholder: (_, __) =>
+                                        CircleAvatar(radius: 35),
+                                    memCacheHeight: 200,
                                     width: 70,
                                     height: 70,
                                     fit: BoxFit.cover,
