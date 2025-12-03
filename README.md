@@ -136,19 +136,6 @@ pubspec.yaml
 
 ---
 
-## 🖼 **Screenshots (optional)**
-
-(Add your screenshots later)
-
-```
-/screenshots
-  screen1.png
-  screen2.png
-  screen3.png
-```
-
----
-
 ## 📘 **API Reference**
 
 This app uses **TMDB API**:
