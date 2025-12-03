@@ -145,7 +145,7 @@ This app uses **TMDB API**:
 
 ## 🙌 **Author**
 
-Developed by **Sai Venkat**
+Developed by **Sai Venkat**. 
 Feel free to open issues or suggest improvements.
 
 ---
